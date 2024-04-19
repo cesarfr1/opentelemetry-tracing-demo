@@ -30,6 +30,7 @@ services:
     networks:
       - tracing
     
+    # test
   jaeger:
     image: jaegertracing/all-in-one:1.56.0
     container_name: jaeger
