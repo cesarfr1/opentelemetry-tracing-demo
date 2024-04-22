@@ -15,7 +15,7 @@ receivers:
 exporters:
   splunk_hec/traces:
     # Splunk HTTP Event Collector token.
-    token: "97fa8a9b-5a05-4730-84bb-dad97d42ec94"
+    token: "0000-000000"
     # URL to a Splunk instance to send data to.
     endpoint: "https://splunk.lan:8088/services/collector"
     # Optional Splunk source: https://docs.splunk.com/Splexicon:Source
@@ -42,7 +42,7 @@ exporters:
 
   signalfx:
     realm: "us1"
-    access_token: "aLR58XusMOKcuz89e9Ebcw"
+    access_token: "0000-0000aaa"
     # api_url: "https://api.us1.signalfx.com"
     # ingest_url: "https://ingest.us1.signalfx.com"
     # Use instead when sending to gateway
@@ -52,7 +52,7 @@ exporters:
     correlation: null
 
   sapm:
-    access_token: "aLR58XusMOKcuz89e9Ebcw"
+    access_token: "0000-0000aaa"
     access_token_passthrough: true
     endpoint: https://ingest.us1.signalfx.com/v2/trace
     max_connections: 100
