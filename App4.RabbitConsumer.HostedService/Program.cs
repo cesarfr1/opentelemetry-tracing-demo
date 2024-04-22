@@ -39,7 +39,7 @@ namespace App4.RabbitConsumer.HostedService
                     {
                         opts.Endpoint =
                             new Uri(
-                                $"{builder.Configuration["Jaeger:Protocol"]}://{builder.Configuration["Jaeger:Host"]}:{builder.Configuration["Jaeger:Port"]}");
+                                $"{builder.Configuration["Jaeger:Protocol"]}://{builder.Configuration["Jaeger:Host"]}:{builder.Configuration["Jaeger:Port"]}/v1/traces");
                     });
             });
 

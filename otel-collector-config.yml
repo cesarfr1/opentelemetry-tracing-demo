@@ -1,0 +1,81 @@
+receivers:
+    otlp:
+      protocols:
+        # grpc:
+        #   endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4317          
+
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        
+
+exporters:
+  splunk_hec/traces:
+    # Splunk HTTP Event Collector token.
+    token: "97fa8a9b-5a05-4730-84bb-dad97d42ec94"
+    # URL to a Splunk instance to send data to.
+    endpoint: "https://splunk.lan:8088/services/collector"
+    # Optional Splunk source: https://docs.splunk.com/Splexicon:Source
+    source: "app"
+    # Optional Splunk source type: https://docs.splunk.com/Splexicon:Sourcetype
+    sourcetype: "traces"
+    # Splunk index, optional name of the Splunk index targeted.
+    index: "main"
+    # Maximum HTTP connections to use simultaneously when sending data. Defaults to 100.
+    # Whether to disable gzip compression over HTTP. Defaults to false.
+    disable_compression: false
+    # HTTP timeout when sending data. Defaults to 10s.
+    timeout: 10s
+    # Whether to skip checking the certificate of the HEC endpoint when sending data over HTTPS. Defaults to false.
+    # For this demo, we use a self-signed certificate on the Splunk docker instance, so this flag is set to true.
+    tls:
+      insecure_skip_verify: true
+  debug:
+      verbosity: detailed
+      sampling_initial: 5
+      sampling_thereafter: 200
+
+  
+
+  signalfx:
+    realm: "us1"
+    access_token: "aLR58XusMOKcuz89e9Ebcw"
+    # api_url: "https://api.us1.signalfx.com"
+    # ingest_url: "https://ingest.us1.signalfx.com"
+    # Use instead when sending to gateway
+    #api_url: http://${SPLUNK_GATEWAY_URL}:6060
+    #ingest_url: http://${SPLUNK_GATEWAY_URL}:9943
+    sync_host_metadata: false
+    correlation: null
+
+  sapm:
+    access_token: "aLR58XusMOKcuz89e9Ebcw"
+    access_token_passthrough: true
+    endpoint: https://ingest.us1.signalfx.com/v2/trace
+    max_connections: 100
+    num_workers: 8
+    log_detailed_response: true
+
+processors:
+    batch:
+
+extensions:
+    health_check:
+      endpoint: 0.0.0.0:13133
+    pprof:
+      endpoint: :1888
+    zpages:
+      endpoint: :55679
+
+service:
+    extensions: [pprof, zpages, health_check]
+    pipelines:
+      traces:
+        receivers: [otlp, jaeger]
+        # receivers: [jaeger]        
+        processors: [batch]
+        # exporters: [signalfx, splunk_hec/traces, debug,sapm]
+        exporters: [signalfx, sapm]

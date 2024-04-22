@@ -23,6 +23,29 @@ services:
     networks:
       - tracing
 
+
+  otelcollector:
+    image: quay.io/signalfx/splunk-otel-collector:latest
+    container_name: otel
+    command: ["--config=/etc/otel-collector-config.yml", "--set=service.telemetry.logs.level=debug"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+    networks:
+      - tracing
+    external_links:
+      - jaeger  
+    ports:
+      - 4317:4317
+      - 4318:4318
+      - 13133:13133
+      - 14250:14250
+      - 14268:14268
+      - 6060:6060
+      - 8888:8888
+      - 9080:9080
+      - 9411:9411
+      - 9943:9943
+
   redis:
     image: redis:7.2.4
     ports:
@@ -31,26 +54,26 @@ services:
       - tracing
     
     # test
-  jaeger:
-    image: jaegertracing/all-in-one:1.56.0
-    container_name: jaeger
-    restart: unless-stopped
-    ports:
-      - 5775:5775/udp
-      - 6831:6831/udp
-      - 6832:6832/udp
-      - 5778:5778
-      - 16686:16686
-      - 14250:14250
-      - 14268:14268
-      - 14269:14269
-      - 4317:4317
-      - 4318:4318
-      - 9411:9411
-    networks:
-      - tracing
-    environment:
-      COLLECTOR_OTLP_ENABLED: true
+  # jaeger:
+  #   image: jaegertracing/all-in-one:1.56.0
+  #   container_name: jaeger
+  #   restart: unless-stopped
+  #   ports:
+  #     - 5775:5775/udp
+  #     - 6831:6831/udp
+  #     - 6832:6832/udp
+  #     - 5778:5778
+  #     - 16686:16686
+  #     - 14250:14250
+  #     - 14268:14268
+  #     - 14269:14269
+  #     - 4317:4317
+  #     - 4318:4318
+  #     - 9411:9411
+  #   networks:
+  #     - tracing
+  #   environment:
+  #     COLLECTOR_OTLP_ENABLED: true
 
   app1:
     build:
@@ -61,14 +84,19 @@ services:
       - tracing
     depends_on: 
       - rabbitmq
-      - jaeger
+      # - jaeger
       - app3
     environment:
       Jaeger__Protocol: http
       Jaeger__Port: 4317
-      Jaeger__Host: jaeger
+      Jaeger__Host: otelcollector
       RabbitMq__Host: rabbitmq
       App3Endpoint: http://app3:8080
+      OTEL_SERVICE_NAME: cf_app1
+      OTEL_RESOURCE_ATTRIBUTES: 'deployment.environment=cf_lab,service.version=1' 
+      OTEL_LOG_LEVEL: debug     
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317/v1/traces
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf 
 
   app2:
     stdin_open: true
@@ -79,16 +107,20 @@ services:
       - tracing
     depends_on: 
       - rabbitmq
-      - jaeger
+      # - jaeger
       - app3
     entrypoint: ["./wait.sh", "30", "dotnet", "App2.RabbitConsumer.Console.dll"]
     environment:
       Jaeger__Protocol: http
       Jaeger__Port: 4317
-      Jaeger__Host: jaeger
+      Jaeger__Host: otelcollector
       RabbitMq__Host: rabbitmq
       App3UriEndpoint: http://app3:8080
-
+      OTEL_SERVICE_NAME: cf_app2
+      OTEL_RESOURCE_ATTRIBUTES: 'deployment.environment=cf_lab,service.version=1'            
+      OTEL_LOG_LEVEL: debug  
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317/v1/traces  
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf 
 
   app3:
     build:
@@ -99,16 +131,19 @@ services:
       - tracing
     depends_on: 
       - rabbitmq
-      - jaeger
+      # - jaeger
       - sqlserver
     environment:
       Jaeger__Protocol: http
       Jaeger__Port: 4317
-      Jaeger__Host: jaeger
+      Jaeger__Host: otelcollector
       RabbitMq__Host: rabbitmq
       SqlDbConnString: server=sqlserver;user id=sa;password=Pass@Word1;
-  
-
+      OTEL_SERVICE_NAME: cf_app3
+      OTEL_RESOURCE_ATTRIBUTES: 'deployment.environment=cf_lab,service.version=1'            
+      OTEL_LOG_LEVEL: debug    
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelco:4317/v1/traces  
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf 
 
   app4:
     build:
@@ -117,15 +152,19 @@ services:
       - tracing
     depends_on: 
       - rabbitmq
-      - jaeger
+      # - jaeger
       - redis
     entrypoint: ["./wait.sh", "30", "dotnet", "App4.RabbitConsumer.HostedService.dll"]
     environment:
       Jaeger__Protocol: http
       Jaeger__Port: 4317
-      Jaeger__Host: jaeger
+      Jaeger__Host: otelcollector
       RabbitMq__Host: rabbitmq
       Redis__Host: redis
       Redis__Port: 6379
-
+      OTEL_SERVICE_NAME: cf_app4
+      OTEL_RESOURCE_ATTRIBUTES: 'deployment.environment=cf_lab,service.version=1'            
+      OTEL_LOG_LEVEL: debug   
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317/v1/traces
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf 
   

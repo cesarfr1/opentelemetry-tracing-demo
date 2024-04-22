@@ -180,7 +180,7 @@ namespace App2.RabbitConsumer.Console
                 {
                     opts.Endpoint =
                         new Uri(
-                            $"{_configuration["Jaeger:Protocol"]}://{_configuration["Jaeger:Host"]}:{_configuration["Jaeger:Port"]}");
+                            $"{_configuration["Jaeger:Protocol"]}://{_configuration["Jaeger:Host"]}:{_configuration["Jaeger:Port"]}/v1/traces");
                 })
                 .Build();
         }
