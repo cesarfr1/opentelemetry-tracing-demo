@@ -1,6 +1,9 @@
 # **Introduction**
 This repository contains an example about how to use opentelemetry for tracing when we have a bunch of distributed applications
-t
+
+**Fork**
+The repo was originally configured to use Jaeger but now is setup to use Splunk Opentelemetry + Splunk Obervability Cloud
+
 # **Content**
 
 The repository contains the following applications:
@@ -37,7 +40,7 @@ The apps are using the following package versions:
 
 # **External Dependencies**
 
-- Jaeger 
+- Splunk Otel 
 - MSSQL Server
 - RabbitMq
 - Redis Cache
@@ -47,64 +50,29 @@ The apps are using the following package versions:
 
 ##  **Using docker-compose**
 
-The repository contains  a **docker-compose** file that starts up the 4 apps and also the external dependencies.   
-There is a **little caveat in the docker-compose**: 
-- You can control the order of service startup and shutdown with the depends_on option. However, for startup Compose does not wait until a container is “ready” only until it’s running.    
-That's a problem because both App3 and App4 need to wait for the rabbitMq container to be ready. To avoid this problem the docker-compose is overwriting the "entrypoint" for both apps and executing a shell script that makes both apps sleep 30 seconds before starting up.
-
-## **Without using the docker-compose**
-
-If you **don't want to use the docker-compose file**, you can use docker to start the dependencies one by one.
-
-- Run a Jaeger image:
-```shell
-docker run -d --name jaeger \
-  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
-  -e COLLECTOR_OTLP_ENABLED=true \
-  -p 6831:6831/udp \
-  -p 6832:6832/udp \
-  -p 5778:5778 \
-  -p 16686:16686 \
-  -p 4317:4317 \
-  -p 4318:4318 \
-  -p 14250:14250 \
-  -p 14268:14268 \
-  -p 14269:14269 \
-  -p 9411:9411 \
-  jaegertracing/all-in-one:latest
+- Clone the repo: ```git clone https://github.com/cesarfr1/opentelemetry-tracing-demo/```
+- Create a ```.env``` file to store the splunk access token and set the variables as per example below
 ```
-- Run a Rabbitmq image:
-
-```shell
-docker run -d --name some-rabbit \
-  -p 15672:15672 \
-  -p 5672:5672 \
-  rabbitmq:3.13.1-management
+SPLUNK_ACCESS_TOKEN: your observability token
+SPLUNK_REALM: us1
+SPLUNK_TRACE_URL: https://ingest.us1.signalfx.com/v2/trace
 ```
-- Run a MSSQL Server
-
-```shell
-docker run -e "ACCEPT_EULA=Y" \
-  -e "SA_PASSWORD=Pass@Word1" \
-  -p 1433:1433 \
-  -d mcr.microsoft.com/mssql/server:2019-GA-ubuntu-16.04
+- Update the following variables on the docker-compose.yaml for a tailored test environment:
 ```
-
-- Run a Redis immage:
-
-```shell
-docker run -d --name some-redis \
-  -p "6379:6379" \
-  redis:7.2.4
+OTEL_RESOURCE_ATTRIBUTES 
+OTEL_SERVICE_NAME
 ```
+- Build the application:
+```docker compose up```
+- Open a curl and trigger a http get on app01 API endpoint: ```curl localhost:5000/publish-message```
+- Then you should be able to see the Trace on Observability Cloud
 
-# Output
+![alt text](image.png)
 
-If you open Jaeger, you are going to see something like this
 
-![Alt Text](https://github.com/karlospn/opentelemetry-tracing-demo/blob/master/docs/jaeger.png)
+### **23/April/2024**
+- Replaced Jaeger with Splunk Otel 
 
-# Changelog
 
 ### **04/15/2024**
 - Updated apps to .NET 8.
