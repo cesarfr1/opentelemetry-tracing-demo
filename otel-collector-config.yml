@@ -1,48 +1,13 @@
 receivers:
     otlp:
       protocols:
-        # grpc:
-        #   endpoint: 0.0.0.0:4317
         http:
           endpoint: 0.0.0.0:4317          
 
-    jaeger:
-      protocols:
-        grpc:
-          endpoint: 0.0.0.0:14250
-        
-
 exporters:
-  splunk_hec/traces:
-    # Splunk HTTP Event Collector token.
-    token: "0000-000000"
-    # URL to a Splunk instance to send data to.
-    endpoint: "https://splunk.lan:8088/services/collector"
-    # Optional Splunk source: https://docs.splunk.com/Splexicon:Source
-    source: "app"
-    # Optional Splunk source type: https://docs.splunk.com/Splexicon:Sourcetype
-    sourcetype: "traces"
-    # Splunk index, optional name of the Splunk index targeted.
-    index: "main"
-    # Maximum HTTP connections to use simultaneously when sending data. Defaults to 100.
-    # Whether to disable gzip compression over HTTP. Defaults to false.
-    disable_compression: false
-    # HTTP timeout when sending data. Defaults to 10s.
-    timeout: 10s
-    # Whether to skip checking the certificate of the HEC endpoint when sending data over HTTPS. Defaults to false.
-    # For this demo, we use a self-signed certificate on the Splunk docker instance, so this flag is set to true.
-    tls:
-      insecure_skip_verify: true
-  debug:
-      verbosity: detailed
-      sampling_initial: 5
-      sampling_thereafter: 200
-
-  
-
   signalfx:
-    realm: "us1"
-    access_token: "0000-0000aaa"
+    realm: "${SPLUNK_REALM}"
+    access_token: "${SPLUNK_ACCESS_TOKEN}"
     # api_url: "https://api.us1.signalfx.com"
     # ingest_url: "https://ingest.us1.signalfx.com"
     # Use instead when sending to gateway
@@ -52,9 +17,9 @@ exporters:
     correlation: null
 
   sapm:
-    access_token: "0000-0000aaa"
-    access_token_passthrough: true
-    endpoint: https://ingest.us1.signalfx.com/v2/trace
+    access_token: "${SPLUNK_ACCESS_TOKEN}"
+    # access_token_passthrough: true
+    endpoint: "${SPLUNK_TRACE_URL}"  
     max_connections: 100
     num_workers: 8
     log_detailed_response: true
@@ -74,7 +39,7 @@ service:
     extensions: [pprof, zpages, health_check]
     pipelines:
       traces:
-        receivers: [otlp, jaeger]
+        receivers: [otlp]
         # receivers: [jaeger]        
         processors: [batch]
         # exporters: [signalfx, splunk_hec/traces, debug,sapm]
